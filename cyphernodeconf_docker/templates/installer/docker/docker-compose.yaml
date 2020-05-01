@@ -158,6 +158,10 @@ services:
       - "SPENDER_BTC_NODE_DEFAULT_WALLET=spending01.dat"
       - "SPENDER_BTC_NODE_RPC_USER=<%= bitcoin_rpcuser %>:<%= bitcoin_rpcpassword %>"
       - "SPENDER_BTC_NODE_RPC_CFG=/tmp/spender_btcnode_curlcfg.properties"
+      <% if ( features.indexOf('wasabi') !== -1 ) { %>
+      - "WASABI_RPC_USER=<%= wasabi_rpcuser %>:<%= wasabi_rpcpassword %>"
+      - "WASABI_RPC_CFG=/tmp/wasabi_curlcfg.properties"
+      <% } %>
       - "PROXY_LISTENING_PORT=8888"
       - "DB_PATH=/proxy/db"
       - "DB_FILE=/proxy/db/proxydb"
@@ -309,7 +313,6 @@ services:
     volumes:
       - "<%= otsclient_datapath %>:/otsfiles"
       - "<%= bitcoin_datapath %>/bitcoin-client.conf:/.bitcoin/bitcoin.conf:ro"
-    command: $USER /script/startotsclient.sh
     networks:
       - cyphernodenet
     <% if (docker_mode == 'compose') { %>
@@ -318,6 +321,59 @@ services:
 #    deploy:
 #      placement:
 #        constraints: [node.hostname==dev]
+  <% } %>
+
+  <% if ( features.indexOf('wasabi') !== -1 ) { %>
+  ##########################
+  # WASABI                 #
+  ##########################
+
+  <%   if ( net === 'regtest' ) { %>
+  # regtest only
+  wasabi-backend:
+    image: cyphernode/wasabi-backend:<%= wasabi_version %>
+    entrypoint: sh -c 'sleep 25 ; while [ ! -f "/container_monitor/bitcoin_ready" ]; do echo "bitcoin not ready" ; sleep 20 ; done ; echo "bitcoin ready!" ; /app/docker-entrypoint.sh'
+    volumes:
+      - "<%= wasabi_datapath %>/backend:/root/.walletwasabi/backend"
+      - container_monitor:/container_monitor:ro
+    stop_grace_period: 30s
+    networks:
+      - cyphernodenet
+    <% if (docker_mode == 'compose') { %>
+    restart: always
+    <% } %>
+    depends_on:
+      - bitcoin
+#    deploy:
+#      placement:
+#        constraints: [node.hostname==dev]
+  <%   } %>
+
+  <%   for ( let index=0; index<wasabi_instance_count; index++ ) { %>
+  wasabi_<%= index %>:
+    image: cyphernode/wasabi:<%= wasabi_version %>
+    entrypoint: sh -c 'sleep <%= (index+1) * 20 + 11 %> ; while [ ! -f "/container_monitor/bitcoin_ready" ]; do echo "bitcoin not ready" ; sleep <%= index * 20 + 10 %> ; done ; echo "bitcoin ready!" ; /app/docker-entrypoint.sh'
+    environment:
+      - "WASABI_RPC_USER=<%= wasabi_rpcuser %>:<%= wasabi_rpcpassword %>"
+      - "WASABI_RPC_CFG=/tmp/wasabi_curlcfg.properties"
+    volumes:
+      - "<%= wasabi_datapath %>/<%= index %>:/root/.walletwasabi/client"
+      - container_monitor:/container_monitor:ro
+    stop_grace_period: 30s
+    networks:
+      - cyphernodenet
+    <% if (docker_mode == 'compose') { %>
+    restart: always
+    <% } %>
+    depends_on:
+      - bitcoin
+      <%   if ( net === 'regtest' ) { %>
+      - wasabi-backend
+      <%   } %>
+#    deploy:
+#      placement:
+#        constraints: [node.hostname==dev]
+  <%   } %>
   <% } %>
 
   ##########################

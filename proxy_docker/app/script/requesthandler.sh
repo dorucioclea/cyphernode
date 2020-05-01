@@ -28,6 +28,7 @@
 . ./elements_manage_missed_conf.sh
 . ./elements_walletoperations.sh
 . ./elements_newblock.sh
+. ./wasabi.sh
 
 main() {
   trace "Entering main()..."
@@ -75,7 +76,7 @@ main() {
     esac
     if [ ${step} -eq 1 ]; then
       trace "[main] step=${step}"
-      if [ "${http_method}" = "POST" ]; then
+      if [ "${http_method}" = "POST" ] && [ "${content_length}" -gt "0" ]; then
         read -rd '' -n ${content_length} line
         line=$(echo "${line}" | jq -c)
         trace "[main] line=${line}"
@@ -563,6 +564,63 @@ main() {
           # curl (GET) http://192.168.111.152:8080/elements_gettransaction/7a45ba9de1f6fbd17e123762cd5b27f18a02a72d581d019abf1030e6a5677178
 
           response=$(elements_get_rawtransaction $(echo "${line}" | cut -d ' ' -f2 | cut -d '/' -f3))
+          response_to_client "${response}" ${?}
+          break
+          ;;
+        wasabi_getnewaddress)
+          # queries random instance for a new bech32 address
+          # POST http://192.168.111.152:8080/wasabi_getnewaddress
+          # BODY {"label":"Pay #12 for 2018"}
+          # BODY {}
+          # Empty BODY: Label will be "unknown"
+
+          response=$(wasabi_newaddr "${line}")
+          response_to_client "${response}" ${?}
+          break
+          ;;
+        wasabi_getbalances)
+          # GET http://192.168.111.152:8080/wasabi_getbalances/{anonset}
+          # GET http://192.168.111.152:8080/wasabi_getbalances/87
+          response=$(wasabi_getbalances $(echo "${line}" | cut -d ' ' -f2 | cut -d '/' -f3))
+          response_to_client "${response}" ${?}
+          break
+          ;;
+        wasabi_spend)
+          # args:
+          # - instanceId: integer, optional
+          # - private: boolean, optional, default=false
+          # - address: string, required
+          # - amount: number, required
+          # - minanonset: number, optional
+          # - label: number, string
+          #
+          # POST http://192.168.111.152:8080/wasabi_spend
+          # BODY {"instanceId":1,"private":true,"amount":0.00103440,"address":"2N8DcqzfkYi8CkYzvNNS5amoq3SbAcQNXKp", label: "my super private coins", minanonset: 90}
+          # BODY {"amount":0.00103440,"address":"2N8DcqzfkYi8CkYzvNNS5amoq3SbAcQNXKp"}
+
+          response=$(wasabi_spend "${line}")
+          response_to_client "${response}" ${?}
+          break
+          ;;
+        wasabi_getunspentcoins)
+          # args:
+          # - instanceId: integer, optional
+          # return all unspent coins of either one wasabi instance
+          # or all instances, depending on the instanceId parameter
+
+          # Using new listunspentcoins
+          response=$(wasabi_getunspentcoins "${line}")
+          response_to_client "${response}" ${?}
+          break
+          ;;
+        wasabi_gettransactions)
+          # args:
+          # - instanceId: integer, optional
+          # return all transactions of either one wasabi instance
+          # or all instances, depending on the instanceId parameter
+
+          # Using new gethistory
+          response=$(wasabi_gettransactions "${line}")
           response_to_client "${response}" ${?}
           break
           ;;

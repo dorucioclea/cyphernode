@@ -1,8 +1,10 @@
+NETWORK=<%= net %>
 INSTALLER_MODE=<%= installer_mode %>
 BITCOIN_INTERNAL=<%= (bitcoin_mode==="internal"?'true':'false') %>
 FEATURE_LIGHTNING=<%= (features.indexOf('lightning') != -1)?'true':'false' %>
 FEATURE_ELEMENTS=<%= (features.indexOf('elements') != -1)?'true':'false' %>
 FEATURE_OTSCLIENT=<%= (features.indexOf('otsclient') != -1)?'true':'false' %>
+FEATURE_WASABI=<%= (features.indexOf('wasabi') != -1)?'true':'false' %>
 LIGHTNING_IMPLEMENTATION=<%= lightning_implementation %>
 PROXY_DATAPATH=<%= proxy_datapath %>
 GATEKEEPER_DATAPATH=<%= gatekeeper_datapath %>
@@ -28,6 +30,13 @@ LIGHTNING_DATAPATH=<%= lightning_datapath %>
 <% } %>
 <% if ( features.indexOf('otsclient') !== -1 ) { %>
 OTSCLIENT_DATAPATH=<%= otsclient_datapath %>
+<% } %>
+<% if ( features.indexOf('wasabi') !== -1 ) { %>
+WASABI_RPCUSER=<%= wasabi_rpcuser %>
+WASABI_RPCPASSWORD=<%= wasabi_rpcpassword %>
+WASABI_INSTANCE_COUNT=<%= wasabi_instance_count %>
+WASABI_DATAPATH=<%= wasabi_datapath %>
+WASABI_MIXUNTIL=<%= wasabi_mixuntil %>
 <% } %>
 <% if ( bitcoin_mode==="internal" ) { %>
 BITCOIN_DATAPATH=<%= bitcoin_datapath %>

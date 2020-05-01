@@ -93,6 +93,7 @@ module.exports = class App {
       bitcoin_version: process.env.BITCOIN_VERSION,
       elements_version: process.env.ELEMENTS_VERSION,
       lightning_version: process.env.LIGHTNING_VERSION,
+      wasabi_version: process.env.WASABI_VERSION,
       notifier_version: process.env.NOTIFIER_VERSION,
       conf_version: process.env.CONF_VERSION,
       setup_version: process.env.SETUP_VERSION,
@@ -153,6 +154,7 @@ module.exports = class App {
         'cyphernode/otsclient': this.sessionData.otsclient_version,
         'traefik': this.sessionData.traefik_version,
         'cyphernode/clightning': this.sessionData.lightning_version,
+        'cyphernode/wasabi': this.sessionData.wasabi_version,
         'cyphernode/notifier': this.sessionData.notifier_version,
         'eclipse-mosquitto': this.sessionData.mosquitto_version
       }
@@ -370,7 +372,8 @@ module.exports = class App {
       'bitcoin_datapath',
       'elements_datapath',
       'lightning_datapath',
-      'otsclient_datapath'
+      'otsclient_datapath',
+      'wasabi_datapath'
     ];
 
     for( let pathProp of pathProps ) {
@@ -560,6 +563,13 @@ module.exports = class App {
           tor_hostname: this.sessionData.tor_elements_hostname
         }
       },
+      wasabi: {
+        docker: "cyphernode/wasabi:"+this.config.docker_versions['cyphernode/wasabi'],
+        extra: {
+          mixuntil: this.config.data.wasabi_mixuntil,
+          instance_count: this.config.data.wasabi_instance_count
+        }
+      }
     }
 
     for( let feature of this.features ) {
